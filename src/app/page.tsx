@@ -1,65 +1,77 @@
-import Image from "next/image";
+import { prisma } from "@/lib/prisma";
+import { DollarSign, Building2, TrendingUp, Users } from "lucide-react";
 
-export default function Home() {
+export default async function DashboardPage() {
+  const companies = await prisma.company.findMany({ include: { kpis: { orderBy: { date: "desc" }, take: 1 } } });
+  const totalInvested = companies.reduce((s, c) => s + c.totalInvestedAmount, 0);
+  const totalValue = companies.reduce((s, c) => s + (c.currentValuation ?? 0) * (c.ownershipPct / 100), 0);
+  const active = companies.filter((c) => c.status === "Active").length;
+
+  const stats = [
+    { label: "Total Invested", value: `$${(totalInvested / 1e6).toFixed(1)}M`, icon: DollarSign, color: "text-indigo-600 bg-indigo-50" },
+    { label: "Portfolio Companies", value: companies.length, icon: Building2, color: "text-emerald-600 bg-emerald-50" },
+    { label: "Active Companies", value: active, icon: Users, color: "text-blue-600 bg-blue-50" },
+    { label: "Portfolio Value", value: `$${(totalValue / 1e6).toFixed(1)}M`, icon: TrendingUp, color: "text-violet-600 bg-violet-50" },
+  ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div>
+      <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
+      <p className="text-gray-500 mb-8 text-sm">Overview of your portfolio</p>
+
+      <div className="grid grid-cols-4 gap-4 mb-10">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+            <div className={`inline-flex p-2 rounded-lg mb-3 ${s.color}`}>
+              <s.icon size={20} />
+            </div>
+            <p className="text-2xl font-bold">{s.value}</p>
+            <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div className="p-5 border-b border-gray-100">
+          <h2 className="font-semibold">Portfolio Companies</h2>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        {companies.length === 0 ? (
+          <div className="p-10 text-center text-gray-400">
+            No companies yet. <a href="/portfolio/new" className="text-indigo-600 hover:underline">Add your first company →</a>
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b border-gray-100">
+                <th className="px-5 py-3 font-medium">Company</th>
+                <th className="px-5 py-3 font-medium">Sector</th>
+                <th className="px-5 py-3 font-medium">Stage</th>
+                <th className="px-5 py-3 font-medium">Invested</th>
+                <th className="px-5 py-3 font-medium">Ownership</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {companies.map((c) => (
+                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-3">
+                    <a href={`/portfolio/${c.id}`} className="font-medium text-indigo-600 hover:underline">{c.name}</a>
+                  </td>
+                  <td className="px-5 py-3 text-gray-600">{c.sector}</td>
+                  <td className="px-5 py-3 text-gray-600">{c.stage}</td>
+                  <td className="px-5 py-3 text-gray-600">${(c.totalInvestedAmount / 1e6).toFixed(2)}M</td>
+                  <td className="px-5 py-3 text-gray-600">{c.ownershipPct}%</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${c.status === "Active" ? "bg-emerald-50 text-emerald-600" : c.status === "Exited" ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"}`}>
+                      {c.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

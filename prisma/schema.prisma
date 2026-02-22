@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Portfolio Company ───────────────────────────────────────────────────────
+
+model Company {
+  id              String   @id @default(cuid())
+  name            String
+  sector          String
+  stage           String
+  website         String?
+  description     String?
+  foundedYear     Int?
+  country         String?
+  status          String   @default("Active")
+
+  initialInvestmentDate DateTime?
+  totalInvestedAmount   Float    @default(0)
+  ownershipPct          Float    @default(0)
+  currentValuation      Float?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  rounds          FundingRound[]
+  kpis            KPI[]
+  scenarios       Scenario[]
+
+  @@map("companies")
+}
+
+// ─── Funding Round ────────────────────────────────────────────────────────────
+
+model FundingRound {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  roundName       String
+  date            DateTime
+  preMoneyVal     Float
+  postMoneyVal    Float
+  roundSize       Float
+  ourInvestment   Float
+  leadInvestor    String?
+  notes           String?
+
+  createdAt       DateTime @default(now())
+
+  @@map("funding_rounds")
+}
+
+// ─── KPI ─────────────────────────────────────────────────────────────────────
+
+model KPI {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  date            DateTime
+  period          String
+
+  arr             Float?
+  mrr             Float?
+  revenue         Float?
+  grossMargin     Float?
+  burnRate        Float?
+  cashBalance     Float?
+  runway          Int?
+
+  headcount       Int?
+  customers       Int?
+  growthMoM       Float?
+
+  notes           String?
+  createdAt       DateTime  @default(now())
+
+  @@map("kpis")
+}
+
+// ─── Scenario ─────────────────────────────────────────────────────────────────
+
+model Scenario {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name            String
+  exitYear        Int
+  exitMultiple    Float
+  exitValuation   Float
+  ourOwnershipAtExit Float
+  proceeds        Float
+  irr             Float?
+  moic            Float?
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("scenarios")
+}
+
+// ─── LP Update ────────────────────────────────────────────────────────────────
+
+model LPUpdate {
+  id              String   @id @default(cuid())
+  title           String
+  period          String
+  content         String
+  status          String   @default("Draft")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("lp_updates")
+}
