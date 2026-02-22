@@ -1,3 +1,4 @@
+﻿export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { DollarSign, Building2, TrendingUp, Users } from "lucide-react";
 
