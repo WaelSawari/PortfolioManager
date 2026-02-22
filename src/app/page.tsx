@@ -1,6 +1,7 @@
 ﻿export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { DollarSign, Building2, TrendingUp, Users } from "lucide-react";
+import SortableTable from "@/components/dashboard/SortableTable";
 
 export default async function DashboardPage() {
   const companies = await prisma.company.findMany({ include: { kpis: { orderBy: { date: "desc" }, take: 1 } } });
@@ -41,36 +42,7 @@ export default async function DashboardPage() {
             No companies yet. <a href="/portfolio/new" className="text-indigo-600 hover:underline">Add your first company →</a>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-500 border-b border-gray-100">
-                <th className="px-5 py-3 font-medium">Company</th>
-                <th className="px-5 py-3 font-medium">Sector</th>
-                <th className="px-5 py-3 font-medium">Stage</th>
-                <th className="px-5 py-3 font-medium">Invested</th>
-                <th className="px-5 py-3 font-medium">Ownership</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {companies.map((c) => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3">
-                    <a href={`/portfolio/${c.id}`} className="font-medium text-indigo-600 hover:underline">{c.name}</a>
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">{c.sector}</td>
-                  <td className="px-5 py-3 text-gray-600">{c.stage}</td>
-                  <td className="px-5 py-3 text-gray-600">${(c.totalInvestedAmount / 1e6).toFixed(2)}M</td>
-                  <td className="px-5 py-3 text-gray-600">{c.ownershipPct}%</td>
-                  <td className="px-5 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${c.status === "Active" ? "bg-emerald-50 text-emerald-600" : c.status === "Exited" ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"}`}>
-                      {c.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <SortableTable companies={companies} />
         )}
       </div>
     </div>
