@@ -1,5 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const { createClient } = require("@libsql/client");
 const { config } = require("dotenv");
 const path = require("path");
 config({ path: path.join(__dirname, "..", ".env.local") });
@@ -10,11 +9,11 @@ let prisma;
 async function main() {
   // @prisma/adapter-libsql is ESM-only in Prisma 7 — must use dynamic import
   const { PrismaLibSql } = await import("@prisma/adapter-libsql");
-  const libsql = createClient({
+  // PrismaLibSql takes a config object directly (not a pre-created @libsql/client instance)
+  const adapter = new PrismaLibSql({
     url: process.env.TURSO_DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
-  const adapter = new PrismaLibSql(libsql);
   prisma = new PrismaClient({ adapter });
 
   console.log("🌱 Seeding portfolio database...");
