@@ -1,0 +1,52 @@
+name: Database Setup (Turso)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to run"
+        required: true
+        default: "setup"
+        type: choice
+        options:
+          - setup       # apply migrations + seed (first time)
+          - migrate     # apply migrations only (schema changes)
+          - seed        # seed only (re-seed existing schema)
+
+jobs:
+  db-setup:
+    name: ${{ github.event.inputs.action }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Apply migrations
+        if: ${{ github.event.inputs.action == 'setup' || github.event.inputs.action == 'migrate' }}
+        run: npm run db:apply
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Seed database
+        if: ${{ github.event.inputs.action == 'setup' || github.event.inputs.action == 'seed' }}
+        run: npm run db:seed
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
