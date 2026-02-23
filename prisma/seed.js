@@ -16,7 +16,7 @@ async function main() {
   });
   prisma = new PrismaClient({ adapter });
 
-  console.log("🌱 Seeding portfolio database...");
+  console.log("🌱 Seeding portfolio database... [seed.js v3 — PrismaLibSql config API]");
 
   // Clear existing data (FK-safe order)
   await prisma.fundCompany.deleteMany();
