@@ -4,7 +4,6 @@ config(); // fallback to .env
 
 import { defineConfig } from "prisma/config";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -12,10 +11,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   adapter: async () => {
-    const libsql = createClient({
+    return new PrismaLibSql({
       url: process.env.TURSO_DATABASE_URL!,
       authToken: process.env.TURSO_AUTH_TOKEN,
     });
-    return new PrismaLibSql(libsql);
   },
 });
