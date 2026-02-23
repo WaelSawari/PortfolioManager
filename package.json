@@ -8,9 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate deploy",
+    "db:apply": "node prisma/apply-migrations.js",
     "db:seed": "node prisma/seed.js",
+    "db:setup": "npm run db:apply && npm run db:seed",
     "db:studio": "prisma studio"
   },
   "dependencies": {
