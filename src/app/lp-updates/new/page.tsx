@@ -1,12 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+
+type Fund = { id: string; name: string; currency: string; mandate: { name: string } };
 
 export default function NewLPUpdatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ period: "", title: "", tone: "professional" });
+  const [funds, setFunds] = useState<Fund[]>([]);
+  const [form, setForm] = useState({ period: "", title: "", tone: "professional", fundId: "" });
+
+  useEffect(() => {
+    fetch("/api/funds")
+      .then((r) => r.json())
+      .then((data) => setFunds(data))
+      .catch(() => {});
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,22 +42,70 @@ export default function NewLPUpdatePage() {
       <form onSubmit={handleGenerate} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Period *</label>
-          <input required type="text" placeholder="e.g. Q4 2025" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" value={form.period} onChange={e => setForm(f => ({ ...f, period: e.target.value }))} />
+          <input
+            required
+            type="text"
+            placeholder="e.g. Q4 2025"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={form.period}
+            onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-          <input required type="text" placeholder="e.g. Q4 2025 Portfolio Update" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+          <input
+            required
+            type="text"
+            placeholder="e.g. Q4 2025 Portfolio Update"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Fund (optional)</label>
+          <select
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={form.fundId}
+            onChange={(e) => setForm((f) => ({ ...f, fundId: e.target.value }))}
+          >
+            <option value="">All funds (full portfolio)</option>
+            {funds.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name} ({f.currency}) — {f.mandate.name}
+              </option>
+            ))}
+          </select>
+          {form.fundId && (
+            <p className="text-xs text-gray-400 mt-1">
+              AI will focus on companies invested in by this fund only.
+            </p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tone</label>
-          <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" value={form.tone} onChange={e => setForm(f => ({ ...f, tone: e.target.value }))}>
+          <select
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={form.tone}
+            onChange={(e) => setForm((f) => ({ ...f, tone: e.target.value }))}
+          >
             <option value="professional">Professional</option>
             <option value="warm">Warm &amp; Conversational</option>
             <option value="concise">Concise &amp; Factual</option>
           </select>
         </div>
-        <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-          {loading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : "Generate with AI"}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" /> Generating...
+            </>
+          ) : (
+            "Generate with AI"
+          )}
         </button>
       </form>
     </div>

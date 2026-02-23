@@ -6,6 +6,70 @@ datasource db {
   provider = "sqlite"
 }
 
+// ─── Mandate ──────────────────────────────────────────────────────────────────
+
+model Mandate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  funds       Fund[]
+
+  @@map("mandates")
+}
+
+// ─── Fund ─────────────────────────────────────────────────────────────────────
+
+model Fund {
+  id               String   @id @default(cuid())
+  mandateId        String
+  mandate          Mandate  @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+
+  name             String
+  fullName         String?
+  currency         String   @default("USD")
+  vintageYear      Int?
+  committedCapital Float    @default(0)
+  managementFeePct Float?
+  carryPct         Float?
+  status           String   @default("Active")
+  notes            String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  investments      FundCompany[]
+  lpUpdates        LPUpdate[]
+
+  @@map("funds")
+}
+
+// ─── FundCompany (join table) ─────────────────────────────────────────────────
+
+model FundCompany {
+  id               String   @id @default(cuid())
+  fundId           String
+  fund             Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  investedAmount   Float    @default(0)
+  ownershipPct     Float    @default(0)
+  currentFV        Float?
+  investmentDate   DateTime?
+  realizedProceeds Float?
+  status           String   @default("Active")
+  notes            String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([fundId, companyId])
+  @@map("fund_companies")
+}
+
 // ─── Portfolio Company ───────────────────────────────────────────────────────
 
 model Company {
@@ -30,6 +94,7 @@ model Company {
   rounds          FundingRound[]
   kpis            KPI[]
   scenarios       Scenario[]
+  fundInvestments FundCompany[]
 
   @@map("companies")
 }
@@ -109,13 +174,15 @@ model Scenario {
 // ─── LP Update ────────────────────────────────────────────────────────────────
 
 model LPUpdate {
-  id              String   @id @default(cuid())
-  title           String
-  period          String
-  content         String
-  status          String   @default("Draft")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  title     String
+  period    String
+  content   String
+  status    String   @default("Draft")
+  fundId    String?
+  fund      Fund?    @relation(fields: [fundId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("lp_updates")
 }

@@ -7,10 +7,12 @@ import {
   BarChart3,
   FileText,
   TrendingUp,
+  Briefcase,
 } from "lucide-react";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/mandates", label: "Mandates & Funds", icon: Briefcase },
   { href: "/portfolio", label: "Portfolio", icon: Building2 },
   { href: "/kpis", label: "KPIs", icon: BarChart3 },
   { href: "/lp-updates", label: "LP Updates", icon: FileText },
@@ -27,7 +29,10 @@ export default function Sidebar() {
       </div>
       <nav className="flex flex-col gap-1">
         {nav.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+          const active =
+            pathname === href ||
+            (href !== "/" && pathname.startsWith(href)) ||
+            (href === "/mandates" && pathname.startsWith("/funds"));
           return (
             <Link
               key={href}

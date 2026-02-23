@@ -7,7 +7,19 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const company = await prisma.company.findUnique({
     where: { id },
-    include: { rounds: { orderBy: { date: "desc" } }, kpis: { orderBy: { date: "desc" }, take: 5 }, scenarios: true },
+    include: {
+      rounds: { orderBy: { date: "desc" } },
+      kpis: { orderBy: { date: "desc" }, take: 5 },
+      scenarios: true,
+      fundInvestments: {
+        include: {
+          fund: {
+            include: { mandate: true },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
   if (!company) notFound();
 
@@ -48,6 +60,63 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
           <h2 className="font-semibold mb-2">About</h2>
           <p className="text-sm text-gray-600">{company.description}</p>
+        </div>
+      )}
+
+      {company.fundInvestments.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-6">
+          <div className="p-5 border-b border-gray-100">
+            <h2 className="font-semibold">Fund Positions</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-400 text-xs border-b border-gray-100 bg-gray-50/50">
+                <th className="px-5 py-3 font-medium">Fund</th>
+                <th className="px-5 py-3 font-medium">Mandate</th>
+                <th className="px-5 py-3 font-medium">Currency</th>
+                <th className="px-5 py-3 font-medium">Invested</th>
+                <th className="px-5 py-3 font-medium">Ownership</th>
+                <th className="px-5 py-3 font-medium">Fair Value</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {company.fundInvestments.map((fi) => {
+                const cur = fi.fund.currency;
+                const fmt = (v: number) =>
+                  cur === "EGP"
+                    ? `EGP ${(v / 1e6).toFixed(2)}M`
+                    : `$${(v / 1e6).toFixed(2)}M`;
+                return (
+                  <tr key={fi.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3">
+                      <a href={`/funds/${fi.fundId}`} className="font-medium text-indigo-600 hover:underline">
+                        {fi.fund.name}
+                      </a>
+                    </td>
+                    <td className="px-5 py-3 text-gray-600">{fi.fund.mandate.name}</td>
+                    <td className="px-5 py-3 text-gray-600">{cur}</td>
+                    <td className="px-5 py-3 text-gray-600">{fmt(fi.investedAmount)}</td>
+                    <td className="px-5 py-3 text-gray-600">{fi.ownershipPct.toFixed(2)}%</td>
+                    <td className="px-5 py-3 text-gray-600">
+                      {fi.currentFV ? fmt(fi.currentFV) : "—"}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        fi.status === "Active"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : fi.status === "Exited"
+                          ? "bg-blue-50 text-blue-600"
+                          : "bg-red-50 text-red-600"
+                      }`}>
+                        {fi.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
