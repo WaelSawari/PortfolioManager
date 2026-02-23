@@ -31,22 +31,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
+      - name: Verify secrets are set
+        run: |
+          if [ -z "$TURSO_DATABASE_URL" ]; then
+            echo "❌ TURSO_DATABASE_URL secret is not set"
+            exit 1
+          fi
+          if [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "❌ TURSO_AUTH_TOKEN secret is not set"
+            exit 1
+          fi
+          echo "✅ Secrets are configured"
+          echo "   URL prefix: ${TURSO_DATABASE_URL:0:12}..."
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
       - name: Apply migrations
         if: ${{ github.event.inputs.action == 'setup' || github.event.inputs.action == 'migrate' }}
-        run: npm run db:apply
+        run: node prisma/apply-migrations.js
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Generate Prisma client
+        if: ${{ github.event.inputs.action == 'setup' || github.event.inputs.action == 'seed' }}
+        run: npm run db:generate
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
       - name: Seed database
         if: ${{ github.event.inputs.action == 'setup' || github.event.inputs.action == 'seed' }}
-        run: npm run db:seed
+        run: node prisma/seed.js
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
