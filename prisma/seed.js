@@ -1,7 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
 const { PrismaLibSQL } = require("@prisma/adapter-libsql");
 const { createClient } = require("@libsql/client");
-require("dotenv/config");
+const { config } = require("dotenv");
+const path = require("path");
+config({ path: path.join(__dirname, "..", ".env.local") });
+config({ path: path.join(__dirname, "..", ".env") });
 
 const libsql = createClient({
   url: process.env.TURSO_DATABASE_URL,
