@@ -1,19 +1,22 @@
 const { PrismaClient } = require("@prisma/client");
-const { PrismaLibSQL } = require("@prisma/adapter-libsql");
 const { createClient } = require("@libsql/client");
 const { config } = require("dotenv");
 const path = require("path");
 config({ path: path.join(__dirname, "..", ".env.local") });
 config({ path: path.join(__dirname, "..", ".env") });
 
-const libsql = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
-const adapter = new PrismaLibSQL(libsql);
-const prisma = new PrismaClient({ adapter });
+let prisma;
 
 async function main() {
+  // @prisma/adapter-libsql is ESM-only in Prisma 7 — must use dynamic import
+  const { PrismaLibSQL } = await import("@prisma/adapter-libsql");
+  const libsql = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
+  const adapter = new PrismaLibSQL(libsql);
+  prisma = new PrismaClient({ adapter });
+
   console.log("🌱 Seeding portfolio database...");
 
   // Clear existing data (FK-safe order)
