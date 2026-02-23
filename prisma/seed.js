@@ -1,9 +1,16 @@
 const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { PrismaLibSQL } = require("@prisma/adapter-libsql");
+const { createClient } = require("@libsql/client");
+const { config } = require("dotenv");
 const path = require("path");
+config({ path: path.join(__dirname, "..", ".env.local") });
+config({ path: path.join(__dirname, "..", ".env") });
 
-const dbPath = path.join(__dirname, "..", "dev.db");
-const adapter = new PrismaBetterSqlite3({ url: dbPath });
+const libsql = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+const adapter = new PrismaLibSQL(libsql);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
